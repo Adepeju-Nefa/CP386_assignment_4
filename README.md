@@ -4,8 +4,23 @@
   
 <h2>  Motivation </h2> 
   <p>This assignment focuses on the use of bankers algorithm in deadlock avoidance</p>
+  
 <h2> Installation </h2>
-    <p> <b>Required software:</b>
+    <p> 
+       <b>Required software:</b>
+         <ul>
+           <li>Linux or Linux Virtual Machine</li>
+           <li>Cloud Storage Browser e.g Cyberduck</li>
+         </ul>
+        <b>How to run:</b>
+           <ol>
+              <li>Download or clone Github repository</li>
+              <li>Connect cloud storage browser to virtual machine</li>
+              <li>Tranfer files to cloud storage browser</li>
+              <li>Run on Linux by changing directory to folder containing files. Use command: <p><code> cd Folder_name </code> </p></li>
+ <li>Use makefile in order to compile program: <p> <code> make </code> </p> </li>
+ <li>Use command to run assignment: <p> <code> ./Question1 10 5 7 8</code></p> </li>
+           </ol>
   
   
 </p>
@@ -28,8 +43,8 @@
     
  <h2>Test cases</h2>
  <h2>Use examples </h2>
- 
  <h2>About developers </h2>
+ <p>Developers are both students of Wilfrid Laurier University majoring in Computer Science</P>
       
  <h2> Credits </h2>
       <p>
@@ -37,7 +52,9 @@
             <li> Oyewole Lovette</li>
             <li>Olowonefa Adepeju</li>
           </ul>
-      </p>
+       </p>
+      
+      
 <h2> License to code </h2>
     <p>MIT License
 
