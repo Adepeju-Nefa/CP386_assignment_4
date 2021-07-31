@@ -164,7 +164,7 @@ void run(int customerCount){
 }
 
 
-void requestResource(int threadID, int item1, int item2, int item3, int item4, int customerCount)
+void request_Resource(int threadID, int item1, int item2, int item3, int item4, int customerCount)
 {
 	if (item1<=customerneed[threadID].resource_1 && item2<=customerneed[threadID].resource_2 &&
 	item3<=customerneed[threadID].resource_3 && item4<=customerneed[threadID].resource_4)	
@@ -231,38 +231,8 @@ void requestResource(int threadID, int item1, int item2, int item3, int item4, i
 	return;
 }
 
-/* we will release the resource when the command RL is used:
-RQ cus# th# th# th# th#
-example: RL 4 1 2 3 1 (from assignment)
-*/
-void releaseResource(int threadID, int item1, int item2, int item3, int item4)
-{
-	if (item1<=customeralloc[threadID].resource_1 && item2<=customeralloc[threadID].resource_1 &&
-	item3<=customeralloc[threadID].resource_3 && item4<=customeralloc[threadID].resource_4)
-	{
-		available[1] += item1;
-		available[2] += item2;
-		available[3] += item3;
-		available[4] += item4;
 
-		customeralloc[threadID].resource_1-= item1;
-		customeralloc[threadID].resource_2-= item2;
-		customeralloc[threadID].resource_3-= item3;
-		customeralloc[threadID].resource_4-= item4;
 
-		customerneed[threadID].resource_1+= item1;
-		customerneed[threadID].resource_2+= item2;
-		customerneed[threadID].resource_3+= item3;
-		customerneed[threadID].resource_4+= item4;
-		printf("resources released sucessfully\n");
-	}
-	else
-	{
-		printf("can not release more than allocated resources\n");
-	}
-	
-	return;
-}
 
 void release_Resource(int threadID, int item1, int item2, int item3, int item4)
 {
@@ -283,11 +253,11 @@ void release_Resource(int threadID, int item1, int item2, int item3, int item4)
 		customerneed[threadID].resource_2+= item2;
 		customerneed[threadID].resource_3+= item3;
 		customerneed[threadID].resource_4+= item4;
-		printf("resources released sucessfully\n");
+		printf("Resources released sucessfully\n");
 	}
 	else
 	{
-		printf("can not release more than allocated resources\n");
+		printf("Cannot release more than allocated resources\n");
 	}
 	
 	return;
