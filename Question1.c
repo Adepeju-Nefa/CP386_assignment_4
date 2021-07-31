@@ -43,6 +43,13 @@ void outputValues(int customerCount);
 void run(int customerCount);
 void *runThread(void *t);
 
+int available[5]; //available array
+
+int safeSeq[5];
+Customer* customermax = NULL;    // max number of resources needed
+Customer* customeralloc = NULL;  // currently allocated resources
+Customer* customerneed = NULL;   // remaining resources (maxneeded-currently allocated)
+int i;
 
 
 
@@ -50,13 +57,12 @@ void *runThread(void *t);
 
 
 
-
-int readfile(char* filename, Customer** customers) {
+int read_File(char* filename, Customer** customers) {
 
 	FILE *file = fopen(filename, "r");
 	if(!file)
 	{
-		printf("Child A: Error in opening input file...exiting with error code -1\n");
+		printf("There was an error in opening input file...exiting with error code -1\n");
 		return -1;
 	}
 
@@ -126,4 +132,197 @@ int readfile(char* filename, Customer** customers) {
 		}
 	}
 	return customer_Count;
+}
+
+
+void run(int customerCount){
+    int k=safetyAlgorithm(customerCount);
+	if (k==0)
+	{
+		printf("UNSAFE: Please check thread before continuing\n");
+		return;
+	}
+	else{
+
+		for (i=0;i<customerCount;i++){ //create and execute threads
+			int runnable = safeSeq[i];
+
+			pthread_t threadID;
+			pthread_attr_t newThread;
+			pthread_attr_init(&newThread);
+
+			pthread_create(&threadID, &newThread, runThread, (void *)&runnable);
+
+
+			pthread_join(threadID, NULL);
+		}
+	}
+	
+
+	return;
+
+}
+
+
+void requestResource(int threadID, int item1, int item2, int item3, int item4, int customerCount)
+{
+	if (item1<=customerneed[threadID].resource_1 && item2<=customerneed[threadID].resource_2 &&
+	item3<=customerneed[threadID].resource_3 && item4<=customerneed[threadID].resource_4)	
+	{
+		if(item1 <= available[1] && item2 <= available[2] && 
+		item3 <= available[3] && item4 <= available[4])
+		{
+
+			available[1] -= item1;
+			available[2] -= item2;
+			available[3] -= item3;
+			available[4] -= item4;
+
+
+			customeralloc[threadID].resource_1+= item1;
+			customeralloc[threadID].resource_2+= item2;
+			customeralloc[threadID].resource_3+= item3;
+			customeralloc[threadID].resource_4+= item4;
+
+			customerneed[threadID].resource_1-= item1;
+			customerneed[threadID].resource_2-= item2;
+			customerneed[threadID].resource_3-= item3;
+			customerneed[threadID].resource_4-= item4;
+
+			int safe = safetyAlgorithm(customerCount);
+
+			if (safe == 0)
+			{
+				available[1] += item1;
+				available[2] += item2;
+				available[3] += item3;
+				available[4] += item4;
+
+				customeralloc[threadID].resource_1-= item1;
+				customeralloc[threadID].resource_2-= item2;
+				customeralloc[threadID].resource_3-= item3;
+				customeralloc[threadID].resource_4-= item4;
+
+				customerneed[threadID].resource_1+= item1;
+				customerneed[threadID].resource_2+= item2;
+				customerneed[threadID].resource_3+= item3;
+				customerneed[threadID].resource_4+= item4;	
+				printf("insuffiecient resources, need to wait\n");
+			}
+			else
+			{
+				printf("request completed sucessfully\n");
+			}
+			
+
+		}
+		else
+		{
+			printf("can not request more than available resources\n");
+		}
+		
+	}
+	else
+	{
+		printf("can not request more than needed resources\n");
+	}
+	
+
+	return;
+}
+
+/* we will release the resource when the command RL is used:
+RQ cus# th# th# th# th#
+example: RL 4 1 2 3 1 (from assignment)
+*/
+void releaseResource(int threadID, int item1, int item2, int item3, int item4)
+{
+	if (item1<=customeralloc[threadID].resource_1 && item2<=customeralloc[threadID].resource_1 &&
+	item3<=customeralloc[threadID].resource_3 && item4<=customeralloc[threadID].resource_4)
+	{
+		available[1] += item1;
+		available[2] += item2;
+		available[3] += item3;
+		available[4] += item4;
+
+		customeralloc[threadID].resource_1-= item1;
+		customeralloc[threadID].resource_2-= item2;
+		customeralloc[threadID].resource_3-= item3;
+		customeralloc[threadID].resource_4-= item4;
+
+		customerneed[threadID].resource_1+= item1;
+		customerneed[threadID].resource_2+= item2;
+		customerneed[threadID].resource_3+= item3;
+		customerneed[threadID].resource_4+= item4;
+		printf("resources released sucessfully\n");
+	}
+	else
+	{
+		printf("can not release more than allocated resources\n");
+	}
+	
+	return;
+}
+
+void release_Resource(int threadID, int item1, int item2, int item3, int item4)
+{
+	if (item1<=customeralloc[threadID].resource_1 && item2<=customeralloc[threadID].resource_2 &&
+	item3<=customeralloc[threadID].resource_3 && item4<=customeralloc[threadID].resource_4)
+	{
+		available[1] += item1;
+		available[2] += item2;
+		available[3] += item3;
+		available[4] += item4;
+
+		customeralloc[threadID].resource_1-= item1;
+		customeralloc[threadID].resource_2-= item2;
+		customeralloc[threadID].resource_3-= item3;
+		customeralloc[threadID].resource_4-= item4;
+
+		customerneed[threadID].resource_1+= item1;
+		customerneed[threadID].resource_2+= item2;
+		customerneed[threadID].resource_3+= item3;
+		customerneed[threadID].resource_4+= item4;
+		printf("resources released sucessfully\n");
+	}
+	else
+	{
+		printf("can not release more than allocated resources\n");
+	}
+	
+	return;
+}
+
+void *runThread(void *t){
+
+    int *tid = (int*)t;
+	printf("- -> Customer/Thread %d\n", *tid);
+	printf("	Allocated resources: ");
+    printf("%d ",customeralloc[*tid].resource_1);
+	printf("%d ",customeralloc[*tid].resource_2);
+	printf("%d ",customeralloc[*tid].resource_3);
+	printf("%d\n",customeralloc[*tid].resource_4);
+
+	printf("	Needed: ");
+    printf("%d ",customerneed[*tid].resource_1);
+	printf("%d ",customerneed[*tid].resource_2);
+	printf("%d ",customerneed[*tid].resource_3);
+	printf("%d\n",customerneed[*tid].resource_4);
+
+	printf("	Available:\n");
+    printf("%d ",available[1]);
+	printf("%d ",available[2]);
+	printf("%d ",available[3]);
+	printf("%d\n",available[4]);
+
+	printf("	Thread has started:\n");
+	printf("	Thread has finished:\n");
+	printf("	Thread is releasing resources:\n");
+	printf("	New Available:\n");
+      printf("%d ",available[1] + customeralloc[*tid].resource_1);
+      printf("%d ",available[2] + customeralloc[*tid].resource_2);
+      printf("%d ",available[3] + customeralloc[*tid].resource_3);
+      printf("%d ",available[4] + customeralloc[*tid].resource_4);
+    
+	return NULL;
 }
