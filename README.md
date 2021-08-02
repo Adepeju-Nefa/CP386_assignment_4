@@ -26,9 +26,8 @@
 </p>
   
  <h2>Screen shots</h2>
+   <img width="446" alt="Screen Shot 2021-08-01 at 9 05 43 PM" src="https://user-images.githubusercontent.com/79343740/127793476-bf8b1ca1-34ee-4f11-abc8-0adc021a2e90.png">
    
-   
-<h2> Individual contribution</h2>
 
  <h2>Features </h2>
     <p>
@@ -42,7 +41,9 @@
     </p>
     
  <h2>Test cases</h2>
+ <p>View screenshot</p>
  <h2>Use examples </h2>
+ <p>View screenshot</p>
  <h2>About developers </h2>
  <p>Developers are both students of Wilfrid Laurier University majoring in Computer Science</P>
       
