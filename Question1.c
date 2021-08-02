@@ -5,15 +5,15 @@
  file description: Using banker's algorithm to solve deadlock problems
  -------------------------------------
  Authors:  Adepeju Olowonefa and Lovette Oyewole
- ID:      193049300,  
- Email:   olow9300@mylaurier.ca, 
+ ID:      193049300,  190888960
+ Email:   olow9300@mylaurier.ca, oyew8960@mylaurier.ca
  github: https://github.com/Adepeju-Nefa/CP386_assignment_4
  Version;  2021-07-29
  -------------------------------------
  */
 
 
-
+//import 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -23,40 +23,187 @@
 #include <semaphore.h>
 #include <time.h>
 
+//define constants
 #define NUMBER_OF_CUSTOMERS 5
 #define NUMBER_OF_RESOURCES 4
 #define FILE_NAME "sample4_in.txt"
 
 typedef struct customer
 {
-	//int cusID;
 	int resource_1;
 	int resource_2;
 	int resource_3;
 	int resource_4;
 } Customer;
+
+//define functions
 int read_File(char* fileName, Customer** customer);
-int safety_Algorithm(int customerCount);
-void request_Resource(int threadID, int item1, int item2, int item3, int item4, int customerCount);
-void release_Resource(int threadID, int item1, int item2, int item3, int item4);
-void outputValues(int customerCount);
-void run(int customerCount);
+int safety_Algorithm(int customer_count);
+void request_Resource(int tid, int num1, int num2, int num3, int num4, int customer_count);
+void release_Resource(int tid, int num1, int num2, int num3, int num4);
+void show_values(int customerCount);
+void run(int customer_count);
 void *runThread(void *t);
 
-int available[5]; //available array
+int available_array[5]; 
 
-int safeSeq[5];
-Customer* customermax = NULL;    // max number of resources needed
-Customer* customeralloc = NULL;  // currently allocated resources
-Customer* customerneed = NULL;   // remaining resources (maxneeded-currently allocated)
+int safe_sequence[5];
+//define the maximum numbrer of customers, the allocated resources, remaining resources
+Customer* max_customer = NULL;    
+Customer* customer_allocation = NULL;  
+Customer* customerneed = NULL;   
+
 int i;
+int main(int argc, char *argv[])
+{
+	char *file_name = "sample4_in.txt";
+
+	if(argc!=5) 
+	{
+		printf("Invalid input, Enter 5 values\n");	
+		return -1;
+	}
+	else
+	{
+		//load characters into array
+		for (i=1; i<argc; i++) 
+		{
+			available_array[i]=atoi(argv[i]);
+			
+		}
+	}
+
+	int customerCount = read_File(file_name, &max_customer);
+
+	//define size of customer allocation
+	customer_allocation = (Customer*) malloc(sizeof(Customer)*customerCount);
+	customerneed = (Customer*) malloc(sizeof(Customer)*customerCount);
+	for(i =0; i <customerCount;i++)
+	{
+		// initialize all the customer allocation to zero
+		customer_allocation[i].resource_1 = 0;
+		customer_allocation[i].resource_2 = 0;
+		customer_allocation[i].resource_3 = 0;
+		customer_allocation[i].resource_4 = 0;
+
+		//initial allocation is 0 so, need = max (for now)
+		customerneed[i].resource_1 = max_customer[i].resource_1;
+		customerneed[i].resource_2 = max_customer[i].resource_2;
+		customerneed[i].resource_3 = max_customer[i].resource_3;
+		customerneed[i].resource_4 = max_customer[i].resource_4;
+	}
+	// print number of customers
+	printf("Number of Customers: %d\n",customerCount);
+	//print number of resources available
+	printf("Currently available resources: %d %d %d %d\n", available_array[1],available_array[2],available_array[3],available_array[4]);
+	//print out all the max resources
+	printf("Maximum Resources from file:\n");
+
+	//loop to print out all resources in file
+	for (i=0; i<customerCount; i++) 
+	{
+		printf("%d, %d, %d, %d\n", max_customer[i].resource_1,max_customer[i].resource_2,max_customer[i].resource_3,max_customer[i].resource_4);
+	}
+	
+
+	//initialize
+	char line[100];
+	char cmd[2];
+	int tid =-1;
+	int num1 =-1;
+	int num2 =-1;
+	int num3 =-1;
+	int num4 =-1;
+
+	
+	do {
+        
+		printf("Enter Command: ");
+		fgets(line,100,stdin);
+
+
+		char *ptr = strtok(line, " ");
+
+		strcpy(cmd,ptr);
+
+		int j =0;
+		while(ptr!=NULL)
+		{
+			switch(j){
+				case 1:
+					tid = atoi(ptr);
+					break;
+				case 2:
+					num1 = atoi(ptr);
+					break;
+				case 3:
+					num2 = atoi(ptr);
+					break;
+				case 4:
+					num3 = atoi(ptr);
+					break;
+				default:
+					num4 = atoi(ptr);
+			}
+			
+			j++;
+			ptr = strtok(NULL," ");
+		}
+		
+		if (strstr(cmd,"RQ")!=NULL)
+		{
+		//if command is RQ call out the trelease resources function and
+		// print out values
+			printf("State is safe, and request is satisfied\n");
+			
+			
+			request_Resource(tid,num1,num2,num3,num4,customerCount);
+			
+
+		}
+		//if command is RL call out the trelease resources function and
+		// print out values
+		else if(strstr(cmd,"RL")!=NULL)
+		{
+		
+			release_Resource(tid,num1,num2,num3,num4);
+		}
+		// if command is Status, call the show values function
+		// print the customer status
+		else if(strstr(cmd,"Status")!=NULL)
+		{
+			
+			show_values(customerCount);
+
+		}
+		else if(strstr(cmd,"RUN")!=NULL)
+		{
+			printf("run function\n");
+			/*
+			do something
+			*/
+
+			printf("You have typed: %s\n\n", cmd);
+			run(customerCount);
+		}		
+		else if(strstr(cmd,"Exit")!=NULL)
+		{
+			printf("End of program!\n");
+			break;
+		}
+		else
+		{
+			printf("invalid command try inputting 'RQ,RL,Status or RUN' [Case Sensitive]\n");
+		}
+		
+
+    } while (1);
+
+}
 
 
 
-
-
-
-
+//function to read from file
 int read_File(char* filename, Customer** customers) {
 
 	FILE *file = fopen(filename, "r");
@@ -134,27 +281,27 @@ int read_File(char* filename, Customer** customers) {
 	return customer_Count;
 }
 
-
+// code to run the program
 void run(int customerCount){
-    int k=safetyAlgorithm(customerCount);
+    int k=safety_Algorithm(customerCount);
 	if (k==0)
 	{
-		printf("UNSAFE: Please check thread before continuing\n");
+		printf("check thread\n");
 		return;
 	}
 	else{
 
-		for (i=0;i<customerCount;i++){ //create and execute threads
-			int runnable = safeSeq[i];
+		for (i=0;i<customerCount;i++){ 
+			int runnable = safe_sequence[i];
 
-			pthread_t threadID;
+			pthread_t tid;
 			pthread_attr_t newThread;
 			pthread_attr_init(&newThread);
 
-			pthread_create(&threadID, &newThread, runThread, (void *)&runnable);
+			pthread_create(&tid, &newThread, runThread, (void *)&runnable);
 
 
-			pthread_join(threadID, NULL);
+			pthread_join(tid, NULL);
 		}
 	}
 	
@@ -163,68 +310,71 @@ void run(int customerCount){
 
 }
 
+//code to request resources from 
 
-void request_Resource(int threadID, int item1, int item2, int item3, int item4, int customerCount)
+void request_Resource(int tid, int num1, int num2, int num3, int num4, int customerCount)
 {
-	if (item1<=customerneed[threadID].resource_1 && item2<=customerneed[threadID].resource_2 &&
-	item3<=customerneed[threadID].resource_3 && item4<=customerneed[threadID].resource_4)	
+	if (num1<=customerneed[tid].resource_1 && num2<=customerneed[tid].resource_2 &&
+	num3<=customerneed[tid].resource_3 && num4<=customerneed[tid].resource_4)	
 	{
-		if(item1 <= available[1] && item2 <= available[2] && 
-		item3 <= available[3] && item4 <= available[4])
+		if(num1 <= available_array[1] && num2 <= available_array[2] && 
+		num3 <= available_array[3] && num4 <= available_array[4])
 		{
 
-			available[1] -= item1;
-			available[2] -= item2;
-			available[3] -= item3;
-			available[4] -= item4;
+			available_array[1] -= num1;
+			available_array[2] -= num2;
+			available_array[3] -= num3;
+			available_array[4] -= num4;
 
 
-			customeralloc[threadID].resource_1+= item1;
-			customeralloc[threadID].resource_2+= item2;
-			customeralloc[threadID].resource_3+= item3;
-			customeralloc[threadID].resource_4+= item4;
+			customer_allocation[tid].resource_1 += num1;
+			customer_allocation[tid].resource_2 += num2;
+			customer_allocation[tid].resource_3 += num3;
+			customer_allocation[tid].resource_4 += num4;
 
-			customerneed[threadID].resource_1-= item1;
-			customerneed[threadID].resource_2-= item2;
-			customerneed[threadID].resource_3-= item3;
-			customerneed[threadID].resource_4-= item4;
+			customerneed[tid].resource_1 -= num1;
+			customerneed[tid].resource_2 -= num2;
+			customerneed[tid].resource_3 -= num3;
+			customerneed[tid].resource_4 -= num4;
 
-			int safe = safetyAlgorithm(customerCount);
+			int is_Safe = safety_Algorithm(customerCount);
 
-			if (safe == 0)
+			if (is_Safe != 0)
 			{
-				available[1] += item1;
-				available[2] += item2;
-				available[3] += item3;
-				available[4] += item4;
-
-				customeralloc[threadID].resource_1-= item1;
-				customeralloc[threadID].resource_2-= item2;
-				customeralloc[threadID].resource_3-= item3;
-				customeralloc[threadID].resource_4-= item4;
-
-				customerneed[threadID].resource_1+= item1;
-				customerneed[threadID].resource_2+= item2;
-				customerneed[threadID].resource_3+= item3;
-				customerneed[threadID].resource_4+= item4;	
-				printf("insuffiecient resources, need to wait\n");
+                printf("request completed sucessfully\n");
+				
 			}
 			else
 			{
-				printf("request completed sucessfully\n");
+				available_array[1] += num1;
+				available_array[2] += num2;
+				available_array[3] += num3;
+				available_array[4] += num4;
+
+				customer_allocation[tid].resource_1 -= num1;
+				customer_allocation[tid].resource_2 -= num2;
+				customer_allocation[tid].resource_3 -= num3;
+				customer_allocation[tid].resource_4 -= num4;
+
+				customerneed[tid].resource_1 += num1;
+				customerneed[tid].resource_2 += num2;
+				customerneed[tid].resource_3 += num3;
+				customerneed[tid].resource_4 += num4;	
+
+				printf("Insuffiecient resources\n");
 			}
 			
 
 		}
 		else
 		{
-			printf("can not request more than available resources\n");
+			printf("Cannot request more than the available resources\n");
 		}
 		
 	}
 	else
 	{
-		printf("can not request more than needed resources\n");
+		printf("Cannot request more than the needed resources\n");
 	}
 	
 
@@ -233,27 +383,26 @@ void request_Resource(int threadID, int item1, int item2, int item3, int item4, 
 
 
 
-
-void release_Resource(int threadID, int item1, int item2, int item3, int item4)
+void release_Resource(int tid, int num1, int num2, int num3, int num4)
 {
-	if (item1<=customeralloc[threadID].resource_1 && item2<=customeralloc[threadID].resource_2 &&
-	item3<=customeralloc[threadID].resource_3 && item4<=customeralloc[threadID].resource_4)
+	if (num1<=customer_allocation[tid].resource_1 && num2<=customer_allocation[tid].resource_2 &&
+	num3<=customer_allocation[tid].resource_3 && num4<=customer_allocation[tid].resource_4)
 	{
-		available[1] += item1;
-		available[2] += item2;
-		available[3] += item3;
-		available[4] += item4;
+		available_array[1] += num1;
+		available_array[2] += num2;
+		available_array[3] += num3;
+		available_array[4] += num4;
 
-		customeralloc[threadID].resource_1-= item1;
-		customeralloc[threadID].resource_2-= item2;
-		customeralloc[threadID].resource_3-= item3;
-		customeralloc[threadID].resource_4-= item4;
+		customer_allocation[tid].resource_1-= num1;
+		customer_allocation[tid].resource_2-= num2;
+		customer_allocation[tid].resource_3-= num3;
+		customer_allocation[tid].resource_4-= num4;
 
-		customerneed[threadID].resource_1+= item1;
-		customerneed[threadID].resource_2+= item2;
-		customerneed[threadID].resource_3+= item3;
-		customerneed[threadID].resource_4+= item4;
-		printf("Resources released sucessfully\n");
+		customerneed[tid].resource_1+= num1;
+		customerneed[tid].resource_2+= num2;
+		customerneed[tid].resource_3+= num3;
+		customerneed[tid].resource_4+= num4;
+		
 	}
 	else
 	{
@@ -263,15 +412,16 @@ void release_Resource(int threadID, int item1, int item2, int item3, int item4)
 	return;
 }
 
+// funtion to riun the thread
 void *runThread(void *t){
 
     int *tid = (int*)t;
 	printf("- -> Customer/Thread %d\n", *tid);
 	printf("	Allocated resources: ");
-    printf("%d ",customeralloc[*tid].resource_1);
-	printf("%d ",customeralloc[*tid].resource_2);
-	printf("%d ",customeralloc[*tid].resource_3);
-	printf("%d\n",customeralloc[*tid].resource_4);
+    printf("%d ",customer_allocation[*tid].resource_1);
+	printf("%d ",customer_allocation[*tid].resource_2);
+	printf("%d ",customer_allocation[*tid].resource_3);
+	printf("%d\n",customer_allocation[*tid].resource_4);
 
 	printf("	Needed: ");
     printf("%d ",customerneed[*tid].resource_1);
@@ -279,20 +429,90 @@ void *runThread(void *t){
 	printf("%d ",customerneed[*tid].resource_3);
 	printf("%d\n",customerneed[*tid].resource_4);
 
-	printf("	Available:\n");
-    printf("%d ",available[1]);
-	printf("%d ",available[2]);
-	printf("%d ",available[3]);
-	printf("%d\n",available[4]);
+	printf("	available:\n");
+    printf("%d ",available_array[1]);
+	printf("%d ",available_array[2]);
+	printf("%d ",available_array[3]);
+	printf("%d\n",available_array[4]);
 
 	printf("	Thread has started:\n");
 	printf("	Thread has finished:\n");
 	printf("	Thread is releasing resources:\n");
 	printf("	New Available:\n");
-      printf("%d ",available[1] + customeralloc[*tid].resource_1);
-      printf("%d ",available[2] + customeralloc[*tid].resource_2);
-      printf("%d ",available[3] + customeralloc[*tid].resource_3);
-      printf("%d ",available[4] + customeralloc[*tid].resource_4);
+      printf("%d ",available_array[1] + customer_allocation[*tid].resource_1);
+      printf("%d ",available_array[2] + customer_allocation[*tid].resource_2);
+      printf("%d ",available_array[3] + customer_allocation[*tid].resource_3);
+      printf("%d ",available_array[4] + customer_allocation[*tid].resource_4);
     
 	return NULL;
+}
+
+
+void show_values(int customerCount)
+
+{
+	printf("Currently available resources: %d %d %d %d\n", available_array[1],available_array[2],available_array[3],available_array[4]);
+	printf("Maximum Resources from file:\n");
+
+	for (i=0; i<customerCount; i++) //print customer items
+	{
+		printf("%d, %d, %d, %d\n", max_customer[i].resource_1,max_customer[i].resource_2,max_customer[i].resource_3,max_customer[i].resource_4);
+	}
+
+	printf("current alloc\n");
+	for (i=0; i<customerCount; i++) 
+	{
+		printf("%d, %d, %d, %d\n", customer_allocation[i].resource_1,customer_allocation[i].resource_2,customer_allocation[i].resource_3,customer_allocation[i].resource_4);
+	}
+
+	printf("still needed\n");
+	for (i=0; i<customerCount; i++) 
+	{
+		printf("%d, %d, %d, %d\n", customerneed[i].resource_1,customerneed[i].resource_2,customerneed[i].resource_3,customerneed[i].resource_4);
+	}
+	return;
+}
+
+int safety_Algorithm(int customerCount)
+
+{
+	
+	int finish[5] = {1,1,1,1,1};
+
+	
+	int available_copy[5];
+	Customer* alloc_copy = NULL;
+
+	Customer* needed_copy = NULL;
+	alloc_copy = (Customer*) malloc(sizeof(Customer)*customerCount);
+	needed_copy = (Customer*) malloc(sizeof(Customer)*customerCount);
+	int customerCount_Copy = customerCount;
+
+	for(i=1;i<5;i++)
+		available_copy[i] = available_array[i];
+
+
+
+	
+
+	for(i =0; i <customerCount;i++)
+	{
+		
+		//alloc_copy[i].cusID = customermax[i].cusID;
+		alloc_copy[i].resource_1 = customer_allocation[i].resource_1;
+		alloc_copy[i].resource_2 = customer_allocation[i].resource_2;
+		alloc_copy[i].resource_3 = customer_allocation[i].resource_3;
+		alloc_copy[i].resource_4 = customer_allocation[i].resource_4;
+		
+		//needed_copy[i].cusID = customermax[i].cusID;
+		needed_copy[i].resource_1 = customerneed[i].resource_1;
+		needed_copy[i].resource_2 = customerneed[i].resource_2;
+		needed_copy[i].resource_3 = customerneed[i].resource_3;
+		needed_copy[i].resource_4 = customerneed[i].resource_4;
+	}
+	int safe = 0;//false
+	
+
+
+	return safe;
 }
